@@ -2,7 +2,30 @@
 
 Selected notebooks from Badrinath Padmanabhan's work at IIT Delhi on socioeconomic measurement using census-derived targets and satellite-related predictors.
 
-The released code covers creation of a PCA-based relative index, random forest regression against that index, and a separate historical prediction experiment using a six-neighbour feature model. It is a research source snapshot, not a complete standalone data product.
+The main entry point is `workflow.py`: a portable version of the selected-feature random forest experiment. The original notebooks remain available for target construction and historical context. This is research code, not a standalone wealth data product.
+
+## Start here
+
+```bash
+python -m pip install -r requirements.txt
+python workflow.py --demo --output outputs/demo
+```
+
+The demo generates artificial numeric features in memory, trains the same random forest configuration used in the original regression notebook, and writes predictions and metrics. Its metrics only demonstrate that the pipeline runs; they are not results from Indian villages or the research study. No datasets or model downloads are required.
+
+## Run with authorised data
+
+Prepare separate training and test CSVs, each with `village_id`, `RWI`, and the selected numeric predictor columns. Supply a JSON array of predictor names, for example `["nightlights", "built_up_fraction"]`. Those names are an input-schema illustration, not a recovered feature list. Preserve village identifiers as strings, especially where leading zeros matter.
+
+```bash
+python workflow.py --train data/train.csv --test data/test.csv \
+  --features data/features.json --group-column district_id \
+  --output outputs/regression
+```
+
+The optional `--group-column` checks that a supplied spatial group does not occur in both splits. Both CSVs must contain that column. Village overlap, duplicate IDs, target leakage through feature names, missing values and nonfinite predictors are rejected. Feature order is fixed for both fitting and prediction. Outputs are `predictions.csv` and `metrics.json`; the script does not load pickle files or distribute fitted models.
+
+Choose features and tune parameters using training data only. Disjoint village IDs alone do not establish spatial independence. The supplied group definition, upstream target construction and feature-selection procedure must also be reviewed. The historical hyperparameters are retained for provenance, not recommended as optimal settings for new datasets.
 
 ## Notebooks
 
@@ -46,7 +69,7 @@ The notebooks assume upstream feature construction and train/test partitioning. 
 
 ## Provenance and release changes
 
-These are existing Drive research notebooks with outputs, execution metadata, Colab mounting and inline package installation removed. Local paths replace private Drive paths. Regression reload prediction now uses the same selected columns as fitting, correcting the original full-feature/selected-feature mismatch. Other exploratory logic is retained.
+The notebooks are existing Drive research source with outputs, execution metadata, Colab mounting and inline package installation removed. Local paths replace private Drive paths. Regression reload prediction now uses the same selected columns as fitting, correcting the original full-feature/selected-feature mismatch. Other exploratory logic is retained. `workflow.py` is a new portable refactor of that regression stage, with CSV inputs, schema checks and an explicitly synthetic demonstration. It is not a recovered historical training script.
 
 Notebook structure and code-cell syntax have been checked. A small artificial-data regression check verifies the feature-selection correction; it is not a research result. The original dataset workflow has not been reproduced end to end.
 
